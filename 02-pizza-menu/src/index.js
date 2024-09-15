@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "./index.css";
 
 const pizzaData = [
   {
@@ -48,7 +49,7 @@ const pizzaData = [
 
 function App() {
   return (
-    <div>
+    <div className="container">
       <Header />
       <Menus />
       <Footer />
@@ -58,20 +59,32 @@ function App() {
 
 function Header() {
   return (
-    <header>
-      <h2>Fast React Pizza Co.</h2>
+    <header className="header">
+      <h1>Fast React Pizza Co.</h1>
     </header>
   );
 }
 
 function Menus() {
   return (
-    <div>
-      <p>Our Menu</p>
-      <Pizza />
-      <Pizza />
-      <Pizza />
-    </div>
+    <main className="menu">
+      <h2>Our Menu</h2>
+      {pizzaData.length > 0 ? (
+        <ul className="pizzas">
+          {pizzaData.map((pizza) => {
+            return <Pizza pizzaObj={pizza} key={pizza.name} />;
+          })}
+        </ul>
+      ) : (
+        <p className="menu-empty">Sorry, we're out of pizza right now</p>
+      )}
+
+      {/* <Pizza
+        photoName="pizzas/spinaci.jpg"
+        name="Pizza Spinaci"
+        ingredients="Tomato, mozarella, spinach, and ricotta cheese"
+      /> */}
+    </main>
   );
 }
 function Footer() {
@@ -80,19 +93,34 @@ function Footer() {
   const closeHour = 22;
   const isOpen = curHour >= openHour && curHour <= closeHour;
 
+  if (!isOpen) return <p>We're currently closed.</p>;
+
   return (
-    <footer>
-      <p>We're open until 23:00.</p>
+    <footer className="footer">
+      {isOpen && <Order closeHour={closeHour} />}
     </footer>
   );
 }
 
-function Pizza() {
+function Pizza(props) {
+  if (props.pizzaObj.soldOut) return null;
+
   return (
-    <div>
-      <img src="./pizzas/focaccia.jpg" alt="Focaccia" />
-      <p>Focaccia</p>
-      <p>Bread with italian olive oil and rosemary</p>
+    <li className="pizza">
+      <img src={props.pizzaObj.photoName} alt={props.pizzaObj.name} />
+      <div>
+        <h3>{props.pizzaObj.name}</h3>
+        <p>{props.pizzaObj.ingredients}</p>
+      </div>
+    </li>
+  );
+}
+
+function Order(props) {
+  return (
+    <div className="order">
+      <p>We're open until {props.closeHour}.Come visit us or order online.</p>
+      <button className="btn">order</button>
     </div>
   );
 }
