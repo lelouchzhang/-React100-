@@ -5,11 +5,32 @@ const initialItems = [
   { id: 2, description: "Socks", quantity: 12, packed: false },
 ];
 export default function App() {
+  // -------------
+  // itemList渲染在PackingList，setItemList完成于Form，所以将这部分内容定义距离在两个组件最近的公共组件中
+  const [itemList, setItemList] = useState(initialItems);
+  function handleAddItemList(newitem) {
+    setItemList((item) => [...item, newitem]);
+  }
+  function handleDeleteItem(id) {
+    setItemList((item) => item.filter((item) => item.id !== id));
+  }
+  function handleToggleItem(id) {
+    setItemList((item) =>
+      item.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item
+      )
+    );
+  }
+  // -------------
   return (
     <div className="app">
       <Logo />
-      <Form />
-      <PackingList />
+      <Form onAddItemList={handleAddItemList} />
+      <PackingList
+        itemList={itemList}
+        onDeleteItem={handleDeleteItem}
+        onToggleItem={handleToggleItem}
+      />
       <Stats />
     </div>
   );
@@ -19,7 +40,7 @@ function Logo() {
   return <h1>👊 备忘录 ✍</h1>;
 }
 
-function Form() {
+function Form({ onAddItemList }) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
 
@@ -35,6 +56,7 @@ function Form() {
       packed: false,
     };
 
+    onAddItemList(userInput);
     setDescription("");
     setQuantity(1);
   }
@@ -64,12 +86,17 @@ function Form() {
   );
 }
 // 备忘录列表
-function PackingList() {
+function PackingList({ itemList, onDeleteItem, onToggleItem }) {
   return (
     <div className="list">
       <ul>
-        {initialItems.map((item) => (
-          <Item item={item} key={item.id} />
+        {itemList.map((item) => (
+          <Item
+            item={item}
+            key={item.id}
+            onDeleteItem={onDeleteItem}
+            onToggleItem={onToggleItem}
+          />
         ))}
       </ul>
     </div>
@@ -77,21 +104,25 @@ function PackingList() {
 }
 
 // 备忘录列表项
-function Item({ item }) {
+function Item({ item, onDeleteItem, onToggleItem }) {
   return (
     <li>
-      <input type="checkbox" />
+      <input
+        type="checkbox"
+        value={item.packed}
+        onChange={() => onToggleItem(item.id)}
+      />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
         {item.quantity} {item.description}
       </span>
-      <button>❌</button>
+      <button onClick={() => onDeleteItem(item.id)}>❌</button>
     </li>
   );
 }
 
 function Stats() {
   return (
-    <footer>
+    <footer className="stats">
       <em>共x笔，已打勾y笔</em>
     </footer>
   );
