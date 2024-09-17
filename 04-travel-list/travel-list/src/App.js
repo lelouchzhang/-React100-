@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { PackingList } from "./component/PackingList";
+import { Form } from "./component/Form";
 
 const initialItems = [
   { id: 1, description: "Passports", quantity: 2, packed: false },
@@ -44,94 +46,8 @@ function Logo() {
   return <h1>👊 备忘录 ✍</h1>;
 }
 
-function Form({ onAddItemList }) {
-  const [description, setDescription] = useState("");
-  const [quantity, setQuantity] = useState(1);
-
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    if (!description) return;
-    // 处理用户输入
-    const userInput = {
-      id: crypto.randomUUID(),
-      description,
-      quantity,
-      packed: false,
-    };
-
-    onAddItemList(userInput);
-    setDescription("");
-    setQuantity(1);
-  }
-  return (
-    <form className="add-form" onSubmit={(e) => handleSubmit(e)}>
-      <h3>你是..不能忘记的..</h3>
-      <select
-        value={quantity}
-        onChange={(e) => setQuantity(Number(e.target.value))}
-      >
-        {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => {
-          return (
-            <option value={num} key={num}>
-              {num}
-            </option>
-          );
-        })}
-      </select>
-      <input
-        type="text"
-        placeholder="请输入..."
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-      <button>添加</button>
-    </form>
-  );
-}
-// 备忘录列表
-function PackingList({ itemList, onDeleteItem, onToggleItem, onClearList }) {
-  // 排序功能
-  const [sortBy, setSortBy] = useState("input");
-  let sortedItems;
-  if (sortBy === "input") sortedItems = itemList;
-  if (sortBy === "description") {
-    sortedItems = [...itemList].sort((a, b) =>
-      a.description.localeCompare(b.description)
-    );
-  }
-  if (sortBy === "packed") {
-    sortedItems = itemList
-      .slice()
-      .sort((a, b) => Number(a.packed) - Number(b.packed));
-  }
-
-  return (
-    <div className="list">
-      <ul>
-        {sortedItems.map((item) => (
-          <Item
-            item={item}
-            key={item.id}
-            onDeleteItem={onDeleteItem}
-            onToggleItem={onToggleItem}
-          />
-        ))}
-      </ul>
-      <div className="actions">
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="input">按添加时间排序</option>
-          <option value="description">按备注排序</option>
-          <option value="packed">按是否完成排序</option>
-        </select>
-        <button onClick={() => onClearList()}>清除所有</button>
-      </div>
-    </div>
-  );
-}
-
 // 备忘录列表项
-function Item({ item, onDeleteItem, onToggleItem }) {
+export function Item({ item, onDeleteItem, onToggleItem }) {
   return (
     <li>
       <input
