@@ -21,6 +21,9 @@ export default function App() {
       )
     );
   }
+  function handleClearList() {
+    setItemList([]);
+  }
   // -------------
   return (
     <div className="app">
@@ -30,8 +33,9 @@ export default function App() {
         itemList={itemList}
         onDeleteItem={handleDeleteItem}
         onToggleItem={handleToggleItem}
+        onClearList={handleClearList}
       />
-      <Stats />
+      <Stats itemList={itemList} />
     </div>
   );
 }
@@ -86,11 +90,26 @@ function Form({ onAddItemList }) {
   );
 }
 // 备忘录列表
-function PackingList({ itemList, onDeleteItem, onToggleItem }) {
+function PackingList({ itemList, onDeleteItem, onToggleItem, onClearList }) {
+  // 排序功能
+  const [sortBy, setSortBy] = useState("input");
+  let sortedItems;
+  if (sortBy === "input") sortedItems = itemList;
+  if (sortBy === "description") {
+    sortedItems = [...itemList].sort((a, b) =>
+      a.description.localeCompare(b.description)
+    );
+  }
+  if (sortBy === "packed") {
+    sortedItems = itemList
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
+  }
+
   return (
     <div className="list">
       <ul>
-        {itemList.map((item) => (
+        {sortedItems.map((item) => (
           <Item
             item={item}
             key={item.id}
@@ -99,6 +118,14 @@ function PackingList({ itemList, onDeleteItem, onToggleItem }) {
           />
         ))}
       </ul>
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">按添加时间排序</option>
+          <option value="description">按备注排序</option>
+          <option value="packed">按是否完成排序</option>
+        </select>
+        <button onClick={() => onClearList()}>清除所有</button>
+      </div>
     </div>
   );
 }
@@ -120,10 +147,14 @@ function Item({ item, onDeleteItem, onToggleItem }) {
   );
 }
 
-function Stats() {
+function Stats({ itemList }) {
+  const numItems = itemList.length;
+  const numPacked = itemList.filter((item) => item.packed).length;
   return (
     <footer className="stats">
-      <em>共x笔，已打勾y笔</em>
+      <em>
+        共{numItems}项备忘，已完成{numPacked}项😋。
+      </em>
     </footer>
   );
 }
