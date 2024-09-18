@@ -15,6 +15,26 @@ export default function App() {
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
   };
+
+  function Button({ bgColor, color, onClick, children }) {
+    return (
+      <button
+        style={{ backgroundColor: bgColor, color: color }}
+        onClick={onClick}
+      >
+        {children}
+      </button>
+    );
+  }
+
+  function StepMessage({ step, children }) {
+    return (
+      <div className="message">
+        <h3>Step {step}:</h3>
+        {children}
+      </div>
+    );
+  }
   return (
     <>
       <button className="close" onClick={() => setIsOpen(!isOpen)}>
@@ -28,23 +48,15 @@ export default function App() {
             <div className={step >= 3 ? "active" : ""}>3</div>
           </div>
 
-          <p className="message">
-            Step:{step}:{messages[step - 1]}
-          </p>
+          <StepMessage step={step}> {messages[step - 1]}</StepMessage>
 
           <div className="buttons">
-            <button
-              style={{ backgroundColor: "#ffd803", color: "#272343" }}
-              onClick={handlePrev}
-            >
-              Previous
-            </button>
-            <button
-              style={{ backgroundColor: "#ffd803", color: "#272343" }}
-              onClick={handleNext}
-            >
-              Next
-            </button>
+            <Button bgColor="#ffd803" color="#272343" onClick={handlePrev}>
+              <span>◀</span> Previous
+            </Button>
+            <Button bgColor="#ffd803" color="#272343" onClick={handleNext}>
+              Next <span>▶</span>
+            </Button>
           </div>
         </div>
       )}
