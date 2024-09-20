@@ -57,6 +57,27 @@ export default function App() {
     <>
       <NavBar movies={movies} />
       <Main>
+        {/* <Box
+          element={
+            <ul className="list">
+              {movies?.map((movie) => (
+                <Movie key={movie.imdbID} movie={movie} />
+              ))}
+            </ul>
+          }
+        />
+        <Box
+          element={
+            <>
+              <Summary watched={watched} />
+              <ul className="list">
+                {watched.map((movie) => (
+                  <WatchedMovie key={movie.imdbID} movie={movie} />
+                ))}
+              </ul>
+            </>
+          }
+        /> */}
         <Box>
           <ul className="list">
             {movies?.map((movie) => (
