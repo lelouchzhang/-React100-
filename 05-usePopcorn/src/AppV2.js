@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StarRating from "./StarRating";
 
 /*
 const tempMovieData = [
@@ -54,7 +55,7 @@ const average = (arr) =>
 
 // omdb api fetching
 const KEY = "ffc2bd7a";
-export default function AppV1() {
+export default function AppV2() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [query, setQuery] = useState("rampage");
@@ -70,6 +71,14 @@ export default function AppV1() {
   // 返回按钮，清除已选movie
   function handleClearSelect() {
     setSelectedId(null);
+  }
+  // 添加已选movie
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
+  }
+  // 从watched列表删除看过的电影、
+  function handleDeleteWatched(id) {
+    setWatched(watched.filter((movie) => movie.imdbID !== id));
   }
 
   useEffect(
@@ -131,13 +140,19 @@ export default function AppV1() {
             <MovieDetails
               selectedId={selectedId}
               onClearMovie={handleClearSelect}
+              onAddWatched={handleAddWatched}
+              watched={watched}
             />
           ) : (
             <>
               <Summary watched={watched} />
               <ul className="list">
                 {watched.map((movie) => (
-                  <WatchedMovie key={movie.imdbID} movie={movie} />
+                  <WatchedMovie
+                    key={movie.imdbID}
+                    movie={movie}
+                    onDeleteWatched={handleDeleteWatched}
+                  />
                 ))}
               </ul>
             </>
@@ -223,9 +238,12 @@ function Movie({ movie, onSelectedMovie }) {
     </li>
   );
 }
-function MovieDetails({ selectedId }) {
+//! 点击左侧电影列表，在右侧展示电影详情
+function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
   // 在useEffect中请求api，获取单一电影信息
   const [movie, setMovie] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [rating, setRating] = useState(0);
 
   const {
     imdbRating,
@@ -239,53 +257,96 @@ function MovieDetails({ selectedId }) {
     Director: director,
     Genre: genre,
   } = movie;
+  const isWatched = watched.map((mobie) => mobie.imdbID).includes(selectedId);
+  const watchedUserRating = watched.find(
+    (movie) => movie.imdbID === selectedId
+  )?.userRating;
+
   useEffect(
     function () {
       async function getMovieDetails() {
+        setIsLoading(() => true);
         const res = await fetch(
           `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
         );
         const data = await res.json();
         setMovie(() => data);
+        setIsLoading(() => false);
       }
       getMovieDetails();
     },
     [selectedId]
   );
 
+  function handleOnAdd() {
+    const newMovie = {
+      imdbID: selectedId,
+      title,
+      year: Number(released.split(" ")[0]),
+      poster,
+      runtime: Number(runtime.split(" ").at(0)),
+      imdbRating: Number(imdbRating),
+      userRating: rating,
+    };
+    onAddWatched(newMovie);
+    //console.log(newMovie);
+    onClearMovie();
+  }
+
   return (
-    <>
-      <div className="details">
-        <header>
-          <button className="btn-back">&larr;</button>
-          <img src={poster} alt={`Poster of ${movie} movie`} />
-          <div className="details-overview">
-            <h2>{title}</h2>
-            <p>
-              {released} &bull; {runtime}
-            </p>
-            <p>{genre}</p>
-            <p>
-              <span>⭐️</span>
-              {imdbRating} IMDb rating
-            </p>
-          </div>
-        </header>
+    <div className="details">
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <>
+          <header>
+            <button className="btn-back" onClick={onClearMovie}>
+              &larr;
+            </button>
+            <img src={poster} alt={`Poster of ${movie} movie`} />
+            <div className="details-overview">
+              <h2>{title}</h2>
+              <p>
+                {released} &bull; {runtime}
+              </p>
+              <p>{genre}</p>
+              <p>
+                <span>⭐️</span>
+                {imdbRating} IMDb rating
+              </p>
+            </div>
+          </header>
 
-        {/* <p>{avgRating}</p> */}
+          {/* <p>{avgRating}</p> */}
 
-        <section>
-          <div className="rating">
-            <StarRating maxRating={10} size={24} />
-          </div>
-          <p>
-            <em>{plot}</em>
-          </p>
-          <p>Starring {actors}</p>
-          <p>Directed by {director}</p>
-        </section>
-      </div>
-    </>
+          <section>
+            <div className="rating">
+              {!isWatched ? (
+                <StarRating
+                  maxRating={10}
+                  size={24}
+                  onSetRating={(star) => setRating(() => star)}
+                />
+              ) : (
+                <p>
+                  You rated with movie {watchedUserRating} <span>⭐</span>
+                </p>
+              )}
+              {rating > 0 && (
+                <button className="btn-add" onClick={handleOnAdd}>
+                  + Add to list
+                </button>
+              )}
+            </div>
+            <p>
+              <em>{plot}</em>
+            </p>
+            <p>Starring {actors}</p>
+            <p>Directed by {director}</p>
+          </section>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -317,11 +378,11 @@ function Summary({ watched }) {
     </div>
   );
 }
-function WatchedMovie({ movie }) {
+function WatchedMovie({ movie, onDeleteWatched }) {
   return (
     <li>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
+      <img src={movie.poster} alt={`${movie.title} poster`} />
+      <h3>{movie.title}</h3>
       <div>
         <p>
           <span>⭐️</span>
@@ -335,6 +396,12 @@ function WatchedMovie({ movie }) {
           <span>⏳</span>
           <span>{movie.runtime} min</span>
         </p>
+        <button
+          className="btn-delete"
+          onClick={() => onDeleteWatched(movie.imdbID)}
+        >
+          X
+        </button>
       </div>
     </li>
   );
