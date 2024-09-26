@@ -53,12 +53,31 @@ const tempWatchedData = [
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
+// useDebounce 自定义钩子
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 // omdb api fetching
 const KEY = "ffc2bd7a";
 export default function AppV2() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
-  const [query, setQuery] = useState("rampage");
+  const [query, setQuery] = useState("");
+  // 派生状态，用于设置输入防抖
+  const debouncedQuery = useDebounce(query, 300);
   const [selectedId, setSelectedId] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -83,34 +102,33 @@ export default function AppV2() {
 
   useEffect(
     function () {
-      // 存放副作用函数
-      async function fetchMovie() {
+      async function fetchMovieByQuery() {
+        if (debouncedQuery.length < 3) {
+          setMovies([]);
+          setErrorMsg("");
+          return;
+        }
+
         try {
-          setIsLoading(() => true);
-          setErrorMsg(() => "");
+          setIsLoading(true);
+          setErrorMsg("");
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${debouncedQuery}`
           );
           if (!res.ok) throw new Error("Something went wrong");
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie Not Found");
-          setMovies(() => data.Search);
+          setMovies(data.Search || []);
         } catch (err) {
-          const errMsg = err.message;
-          setErrorMsg(() => errMsg);
+          setErrorMsg(err.message);
         } finally {
-          setIsLoading(() => false);
+          setIsLoading(false);
         }
       }
 
-      if (query.length < 3) {
-        setMovies(() => []);
-        setErrorMsg(() => "");
-        return;
-      }
-      fetchMovie();
+      fetchMovieByQuery();
     },
-    [query]
+    [debouncedQuery]
   );
 
   return (
@@ -174,7 +192,6 @@ function NavBar({ children }) {
     <nav className="nav-bar">
       <Logo />
       {children}
-      {/* <Search query={query} setQuery={setQuery} /> */}
     </nav>
   );
 }
@@ -277,6 +294,17 @@ function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
     },
     [selectedId]
   );
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `Movie | ${title}`;
+      //? 在React中，useEffect钩子允许你返回一个清理函数，这个清理函数会在组件卸载或者在useEffect的依赖项发生变化导致组件重新渲染之前被调用。
+      return function () {
+        document.title = "usePopcorn";
+      };
+    },
+    [title]
+  );
 
   function handleOnAdd() {
     const newMovie = {
@@ -289,7 +317,6 @@ function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
       userRating: rating,
     };
     onAddWatched(newMovie);
-    //console.log(newMovie);
     onClearMovie();
   }
 
