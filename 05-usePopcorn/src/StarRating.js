@@ -50,9 +50,8 @@ export default function StarRating({
     <div className="star-rating" style={containerStyle}>
       <div style={starContainerStyle} className={className}>
         {Array.from({ length: maxRating }, (_, i) => (
-          <span>
+          <span key={i}>
             <Star
-              key={i}
               onRating={() => handleRating(i + 1)}
               onHoverIn={() => setHovered(i + 1)}
               onHoverOut={() => setHovered(null)}

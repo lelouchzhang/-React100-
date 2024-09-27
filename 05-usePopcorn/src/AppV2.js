@@ -100,8 +100,11 @@ export default function AppV2() {
     setWatched(watched.filter((movie) => movie.imdbID !== id));
   }
 
+  // 防抖
   useEffect(
     function () {
+      const controller = new AbortController();
+
       async function fetchMovieByQuery() {
         if (debouncedQuery.length < 3) {
           setMovies([]);
@@ -113,20 +116,28 @@ export default function AppV2() {
           setIsLoading(true);
           setErrorMsg("");
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${debouncedQuery}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${debouncedQuery}`,
+            { singal: controller.signal }
           );
           if (!res.ok) throw new Error("Something went wrong");
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie Not Found");
           setMovies(data.Search || []);
         } catch (err) {
-          setErrorMsg(err.message);
+          // 不处理请求中止的错误
+          if (err.name === "AbortError") {
+            setErrorMsg(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
       }
 
+      handleClearSelect();
       fetchMovieByQuery();
+      return function () {
+        controller.abort();
+      };
     },
     [debouncedQuery]
   );
@@ -305,6 +316,16 @@ function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
     },
     [title]
   );
+  // escape键 退出movieDetails
+  useEffect(() => {
+    const cb = (e) => {
+      if (e.code === "Escape") onClearMovie();
+    };
+    document.addEventListener("keydown", cb);
+    return function () {
+      document.removeEventListener("keydown", cb);
+    };
+  }, [onClearMovie]);
 
   function handleOnAdd() {
     const newMovie = {
