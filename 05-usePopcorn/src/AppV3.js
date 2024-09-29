@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import StarRating from "./StarRating";
 import { useFetchMovie } from "./hooks/useFetchMovie";
 import { useGetMovie } from "./hooks/useGetMovie";
+import { useLocalStorageState } from "./hooks/useLocalStorageState";
+import { useKey } from "./hooks/useKey";
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
@@ -27,13 +29,9 @@ export default function AppV2() {
   // 派生状态，用于设置输入防抖
   const debouncedQuery = useDebounce(query, 300);
   const [selectedId, setSelectedId] = useState(null);
+  // 重构，抽离为自定义钩子
   const { isLoading, errorMsg, movies } = useFetchMovie(debouncedQuery);
-
-  // const [watched, setWatched] = useState([]);
-  const [watched, setWatched] = useState(function () {
-    const storedValue = localStorage.getItem("watched");
-    return JSON.parse(storedValue);
-  });
+  const [watched, setWatched] = useLocalStorageState([], "watched");
 
   // 点击展示对应movie
   function handleSelectMovie(id) {
@@ -51,13 +49,6 @@ export default function AppV2() {
   function handleDeleteWatched(id) {
     setWatched(watched.filter((movie) => movie.imdbID !== id));
   }
-
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
 
   return (
     <>
@@ -142,18 +133,13 @@ function Logo() {
 }
 function Search({ query, setQuery }) {
   const inputElement = useRef(null);
-  useEffect(() => {
-    const callback = (e) => {
-      // 如果当前活动元素是input，则不处��
-      if (document.activeElement === inputElement.current) return;
-      if (e.code === "Enter") {
-        inputElement.current.focus();
-        setQuery("");
-      }
-    };
-    document.addEventListener("keydown", callback);
-    return () => document.removeEventListener("keydown", callback);
-  }, [setQuery]);
+  useKey("Enter", () => {
+    // 如果当前活动元素是input，则不处理
+    if (document.activeElement === inputElement.current) return;
+    inputElement.current.focus();
+    setQuery("");
+  });
+
   return (
     <input
       className="search"
@@ -229,16 +215,7 @@ function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
     },
     [title]
   );
-  // escape键 退出movieDetails
-  useEffect(() => {
-    const cb = (e) => {
-      if (e.code === "Escape") onClearMovie();
-    };
-    document.addEventListener("keydown", cb);
-    return function () {
-      document.removeEventListener("keydown", cb);
-    };
-  }, [onClearMovie]);
+  useKey("Escape", onClearMovie);
 
   // useRef 计算点击评分的次数（无意义练习用）
   const countRef = useRef(0);
