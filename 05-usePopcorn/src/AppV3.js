@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import StarRating from "./StarRating";
-
+import { useFetchMovie } from "./hooks/useFetchMovie";
+import { useGetMovie } from "./hooks/useGetMovie";
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
@@ -21,17 +22,12 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// omdb api fetching
-const KEY = "ffc2bd7a";
 export default function AppV2() {
-  const [movies, setMovies] = useState([]);
   const [query, setQuery] = useState("");
   // 派生状态，用于设置输入防抖
   const debouncedQuery = useDebounce(query, 300);
   const [selectedId, setSelectedId] = useState(null);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const { isLoading, errorMsg, movies } = useFetchMovie(debouncedQuery);
 
   // const [watched, setWatched] = useState([]);
   const [watched, setWatched] = useState(function () {
@@ -61,47 +57,6 @@ export default function AppV2() {
       localStorage.setItem("watched", JSON.stringify(watched));
     },
     [watched]
-  );
-
-  useEffect(
-    function () {
-      const controller = new AbortController();
-
-      async function fetchMovieByQuery() {
-        if (debouncedQuery.length < 3) {
-          setMovies([]);
-          setErrorMsg("");
-          return;
-        }
-
-        try {
-          setIsLoading(true);
-          setErrorMsg("");
-          const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${debouncedQuery}`,
-            { singal: controller.signal }
-          );
-          if (!res.ok) throw new Error("Something went wrong");
-          const data = await res.json();
-          if (data.Response === "False") throw new Error("Movie Not Found");
-          setMovies(data.Search || []);
-        } catch (err) {
-          // 不处理请求中止的错误
-          if (err.name === "AbortError") {
-            setErrorMsg(err.message);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      handleClearSelect();
-      fetchMovieByQuery();
-      return function () {
-        controller.abort();
-      };
-    },
-    [debouncedQuery]
   );
 
   return (
@@ -186,6 +141,19 @@ function Logo() {
   );
 }
 function Search({ query, setQuery }) {
+  const inputElement = useRef(null);
+  useEffect(() => {
+    const callback = (e) => {
+      // 如果当前活动元素是input，则不处��
+      if (document.activeElement === inputElement.current) return;
+      if (e.code === "Enter") {
+        inputElement.current.focus();
+        setQuery("");
+      }
+    };
+    document.addEventListener("keydown", callback);
+    return () => document.removeEventListener("keydown", callback);
+  }, [setQuery]);
   return (
     <input
       className="search"
@@ -193,6 +161,7 @@ function Search({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
+      ref={inputElement}
     />
   );
 }
@@ -230,11 +199,8 @@ function Movie({ movie, onSelectedMovie }) {
 }
 //! 点击左侧电影列表，在右侧展示电影详情
 function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
-  // 在useEffect中请求api，获取单一电影信息
-  const [movie, setMovie] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
   const [rating, setRating] = useState(0);
-
+  const { movie, isLoading } = useGetMovie(selectedId);
   const {
     imdbRating,
     Title: title,
@@ -254,24 +220,9 @@ function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
 
   useEffect(
     function () {
-      async function getMovieDetails() {
-        setIsLoading(() => true);
-        const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
-        );
-        const data = await res.json();
-        setMovie(() => data);
-        setIsLoading(() => false);
-      }
-      getMovieDetails();
-    },
-    [selectedId]
-  );
-  useEffect(
-    function () {
       if (!title) return;
       document.title = `Movie | ${title}`;
-      //? 在React中，useEffect钩子允许你返回一个清理函数，这个清理函数会在组件卸载或者在useEffect的依赖项发生变化导致组件重新渲染之前被调用。
+      //? 在React中，useEffect钩子允许你返回一个清理函数，这个清��函数会在组件卸载或者在useEffect的依赖项发生变化导致组件重新渲染之前被调用。
       return function () {
         document.title = "usePopcorn";
       };
@@ -289,6 +240,12 @@ function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
     };
   }, [onClearMovie]);
 
+  // useRef 计算点击评分的次数（无意义练习用）
+  const countRef = useRef(0);
+  useEffect(() => {
+    if (rating) countRef.current = countRef.current + 1;
+  }, [rating]);
+
   function handleOnAdd() {
     const newMovie = {
       imdbID: selectedId,
@@ -298,6 +255,7 @@ function MovieDetails({ watched, selectedId, onClearMovie, onAddWatched }) {
       runtime: Number(runtime.split(" ").at(0)),
       imdbRating: Number(imdbRating),
       userRating: rating,
+      testCount: countRef.current,
     };
     onAddWatched(newMovie);
     onClearMovie();
