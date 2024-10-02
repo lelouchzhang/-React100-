@@ -8,6 +8,8 @@ import Questions from "./Questions";
 import NextButton from "./NextButton";
 import Main from "./Main";
 import FinishQuiz from "./FinishQuiz";
+import Footer from "./Footer";
+import Timer from "./Timer";
 
 const initialState = {
   questions: [],
@@ -16,6 +18,8 @@ const initialState = {
   index: 0,
   answer: null,
   points: 0,
+  highScore: 0,
+  countDown: null,
 };
 function reducer(state, action) {
   switch (action.type) {
@@ -34,6 +38,8 @@ function reducer(state, action) {
       return {
         ...state,
         status: "active",
+        // 每题30s
+        countDown: state.questions.length * 30,
       };
     case "newAnswer":
       const curQuestion = state.questions.at(state.index);
@@ -53,21 +59,37 @@ function reducer(state, action) {
         answer: null,
       };
     case "finish":
+      const highScore =
+        state.points > state.highScore ? state.points : state.highScore;
       return {
         ...state,
         status: "finish",
+        highScore,
+      };
+    case "reset":
+      return {
+        ...initialState,
+        questions: state.questions,
+        status: "ready",
+      };
+    case "toki":
+      return {
+        ...state,
+        countDown: state.countDown - 1,
+        status: state.countDown === 0 ? "finish" : state.status,
       };
     default:
-      throw new Error("未知错误于render中");
+      throw new Error("Unknown error in render function");
   }
 }
 
 export default function App() {
   //* 注意拼写，注意useReducer接收参数的顺序。
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [
+    { questions, status, index, answer, points, highScore, countDown },
+    dispatch,
+  ] = useReducer(reducer, initialState);
+  // 两个派生属性
   const numQuestion = questions.length;
   const totalPoints = questions.reduce(
     (accumulator, currentValue) => accumulator + currentValue.points,
@@ -115,15 +137,23 @@ export default function App() {
               dispatch={dispatch}
               answer={answer}
             />
-            <NextButton
-              dispatch={dispatch}
-              numQuestion={numQuestion}
-              index={index}
-            />
+            <Footer>
+              <Timer countDown={countDown} dispatch={dispatch} />
+              <NextButton
+                dispatch={dispatch}
+                numQuestion={numQuestion}
+                index={index}
+              />
+            </Footer>
           </>
         )}
         {status === "finish" && (
-          <FinishQuiz points={points} totalPoints={totalPoints} />
+          <FinishQuiz
+            points={points}
+            totalPoints={totalPoints}
+            highScore={highScore}
+            dispatch={dispatch}
+          />
         )}
       </Main>
     </div>
