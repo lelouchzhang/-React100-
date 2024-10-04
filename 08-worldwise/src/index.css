@@ -27,7 +27,8 @@ html {
 }
 
 body {
-  font-family: "Manrope", sans-serif;
+  /* "Twemoji Country Flags",显示国旗的字体，在html也要导入 */
+  font-family: "Twemoji Country Flags", "Manrope", sans-serif;
   color: var(--color-light--2);
   font-weight: 400;
   line-height: 1.6;
