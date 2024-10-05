@@ -18,6 +18,7 @@ export default function CityItem({ city }) {
     position: { lat, lng },
   } = city;
   return (
+    //! 这里的跳转触发全局变化，如果在其他位置监听这些属性，那么他们都会变化
     <Link className={styles.cityItem} to={`${id}?lat=${lat}&lng=${lng}`}>
       <li>
         <span className={styles.emoji}>{emoji}</span>

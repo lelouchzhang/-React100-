@@ -18,5 +18,7 @@ module.exports = {
     ],
     // 关闭仿佛组件传值时子组件的类型缺失警告
     "react/prop-types": "off",
+    // 关闭未使用的值的报错
+    "no-unused-vars": 0,
   },
 };
