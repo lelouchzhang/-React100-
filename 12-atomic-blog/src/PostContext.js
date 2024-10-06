@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { faker } from "@faker-js/faker";
 
 // ctx组件
@@ -11,7 +11,7 @@ function createRandomPost() {
   };
 }
 
-// provider组件
+// provider组件 将所有状态都存在此处
 function PostProvider({ children }) {
   const [posts, setPosts] = useState(() =>
     Array.from({ length: 30 }, () => createRandomPost())
@@ -51,5 +51,12 @@ function PostProvider({ children }) {
     </postContext.Provider>
   );
 }
+// 自定义hook,在组件中使用usePost()代替useContext(postContext)
+function usePost() {
+  const ctx = useContext(postContext);
+  if (ctx === "undefined")
+    throw new Error("PostContext was used outside of the PostProvider");
+  return ctx;
+}
 
-export { postContext, PostProvider, createRandomPost };
+export { usePost, PostProvider, createRandomPost };

@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from "react";
-import { postContext, PostProvider, createRandomPost } from "./PostContext";
+import { useEffect, useState } from "react";
+import { usePost, PostProvider, createRandomPost } from "./PostContext";
 
 function App() {
   const [isFakeDark, setIsFakeDark] = useState(false);
@@ -32,7 +32,7 @@ function App() {
 }
 
 function Header() {
-  const { onClearPosts } = useContext(postContext);
+  const { onClearPosts } = usePost();
   return (
     <header>
       <h1>
@@ -48,7 +48,7 @@ function Header() {
 }
 
 function SearchPosts() {
-  const { searchQuery, setSearchQuery } = useContext(postContext);
+  const { searchQuery, setSearchQuery } = usePost();
   return (
     <input
       value={searchQuery}
@@ -59,7 +59,7 @@ function SearchPosts() {
 }
 
 function Results() {
-  const { posts } = useContext(postContext);
+  const { posts } = usePost();
   return <p>🚀 {posts.length} atomic posts found</p>;
 }
 
@@ -83,7 +83,7 @@ function Posts() {
 function FormAddPost() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const { onAddPost } = useContext(postContext);
+  const { onAddPost } = usePost();
 
   const handleSubmit = function (e) {
     e.preventDefault();
@@ -111,7 +111,7 @@ function FormAddPost() {
 }
 
 function List() {
-  const { posts } = useContext(postContext);
+  const { posts } = usePost();
   return (
     <ul>
       {posts.map((post, i) => (
@@ -132,7 +132,7 @@ function Archive() {
   );
 
   const [showArchive, setShowArchive] = useState(false);
-  const { onAddPost } = useContext(postContext);
+  const { onAddPost } = usePost();
 
   return (
     <aside>
