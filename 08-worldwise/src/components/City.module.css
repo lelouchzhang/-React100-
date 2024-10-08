@@ -3,7 +3,11 @@
   max-height: 70%;
   background-color: var(--color-dark--2);
   border-radius: 7px;
-  overflow: scroll;
+  /* 隐藏滚动条 */
+  overflow: hidden;
+  overflow-y: scroll;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 
   width: 100%;
   display: flex;

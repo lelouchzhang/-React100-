@@ -36,3 +36,13 @@
 :global(.leaflet-popup-content-wrapper) {
   border-left: 5px solid var(--color-brand--2);
 }
+
+.customPopup {
+  font-family: "Twemoji Country Flags", "Segoe UI Emoji", "Noto Color Emoji",
+    "Apple Color Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+.cityEmoji {
+  font-size: 2rem;
+  margin-right: 0.5rem;
+}

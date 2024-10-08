@@ -1,16 +1,86 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCities } from "../hooks/useCities";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMap,
+  useMapEvent,
+} from "react-leaflet";
+import { useGeolocation } from "../hooks/useGeoLocation";
 import styles from "./Map.module.css";
+import Button from "./Button";
+import { useUrlPosition } from "../hooks/useUrlPosition";
 
 export default function Map() {
-  // eslint-disable-next-line
-  const [searchParams, setSearchParams] = useSearchParams();
-  const navigator = useNavigate();
-  const lat = searchParams.get("lat");
-  const lng = searchParams.get("lng");
+  const { cities } = useCities();
+  const [position, setPosition] = useState([51.505, -0.09]);
+  const { position: GeoPosition, getPosition } = useGeolocation();
+  const [lat, lng] = useUrlPosition();
+
+  useEffect(() => {
+    if (lat && lng) setPosition([lat, lng]);
+  }, [lat, lng]);
+
+  useEffect(() => {
+    if (GeoPosition) setPosition([GeoPosition.lat, GeoPosition.lng]);
+  }, [GeoPosition]);
 
   return (
-    <div className={styles.mapContainer} onClick={() => navigator("form")}>
-      Map
+    <div className={styles.mapContainer}>
+      {!GeoPosition && (
+        <Button onClick={getPosition} type="position">
+          Where am I?
+        </Button>
+      )}
+      <MapContainer
+        center={position}
+        zoom={5}
+        scrollWheelZoom={true}
+        className={styles.map}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+        />
+        {cities.map((city) => (
+          <Marker
+            position={[city.position.lat, city.position.lng]}
+            key={city.id}
+          >
+            <Popup className={styles.customPopup}>
+              <span className={styles.cityEmoji}>{city.emoji}</span>
+              <span>{city.cityName}</span>
+            </Popup>
+          </Marker>
+        ))}
+        {GeoPosition && (
+          <Marker position={[GeoPosition.lat, GeoPosition.lng]}>
+            <Popup>
+              <span>You are here</span>
+            </Popup>
+          </Marker>
+        )}
+        <ChangePosition position={position} />
+        <HandleClick />
+      </MapContainer>
     </div>
   );
+  // 自定义组件1
+  function ChangePosition({ position }) {
+    const map = useMap();
+    map.setView(position);
+    return null;
+  }
+  // 自定义组件2
+  function HandleClick() {
+    const navigate = useNavigate();
+    useMapEvent({
+      click: (e) => {
+        return navigate(`form?lat=${e.latlng.lat}&lng=${e.latlng.lng}`);
+      },
+    });
+  }
 }

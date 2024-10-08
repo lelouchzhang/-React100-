@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useCities } from "../hooks/useCities";
 import styles from "./CityItem.module.css";
 
 const formatDate = (date) =>
@@ -17,9 +18,16 @@ export default function CityItem({ city }) {
     id,
     position: { lat, lng },
   } = city;
+  const { currentCity } = useCities();
+
   return (
     //! 这里的跳转触发全局变化，如果在其他位置监听这些属性，那么他们都会变化
-    <Link className={styles.cityItem} to={`${id}?lat=${lat}&lng=${lng}`}>
+    <Link
+      className={`${styles.cityItem} ${
+        id === currentCity.id ? styles["cityItem--active"] : ""
+      }`}
+      to={`${id}?lat=${lat}&lng=${lng}`}
+    >
       <li>
         <span className={styles.emoji}>{emoji}</span>
         <h3 className={styles.name}>{cityName}</h3>
