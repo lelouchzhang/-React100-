@@ -23,6 +23,7 @@ export default function App() {
           <Route path="app" element={<AppLayout />}>
             <Route index element={<Navigate replace to="cities" />} />
             <Route path="cities" element={<CityList />} />
+            {/* 匹配cities/:id时 */}
             <Route path="cities/:id" element={<City />} />
             <Route path="countries" element={<CountryList />} />
             <Route path="form" element={<Form />} />

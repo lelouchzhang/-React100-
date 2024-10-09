@@ -16,10 +16,10 @@ import { useUrlPosition } from "../hooks/useUrlPosition";
 
 export default function Map() {
   const { cities } = useCities();
-  const [position, setPosition] = useState([51.505, -0.09]);
   const { position: GeoPosition, getPosition } = useGeolocation();
   const [lat, lng] = useUrlPosition();
 
+  const [position, setPosition] = useState([51.505, -0.09]);
   useEffect(() => {
     if (lat && lng) setPosition([lat, lng]);
   }, [lat, lng]);
@@ -68,13 +68,13 @@ export default function Map() {
       </MapContainer>
     </div>
   );
-  // 自定义组件1
+  // 通过传入坐标跳转
   function ChangePosition({ position }) {
     const map = useMap();
     map.setView(position);
     return null;
   }
-  // 自定义组件2
+  // 鼠标点击地图跳转
   function HandleClick() {
     const navigate = useNavigate();
     useMapEvent({
