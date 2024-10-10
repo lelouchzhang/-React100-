@@ -1,32 +1,27 @@
-import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useCities } from "../hooks/useCities";
 import Button from "./Button";
 import styles from "./City.module.css";
 import Spinner from "./Spinner";
-
-const formatDate = (date) =>
-  new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    weekday: "long",
-  }).format(new Date(date));
+import { useEffect } from "react";
 
 function City() {
   const { id } = useParams();
-  const { getCity, currentCity, isLoading } = useCities();
-  const navigator = useNavigate();
-  useEffect(
-    function () {
-      getCity(id);
-    },
-    [id, getCity]
-  );
+  const { getCity, currentCity, isLoading, deleteCity } = useCities();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    getCity(id);
+  }, [id, getCity]);
+
+  if (isLoading) return <Spinner />;
 
   const { cityName, emoji, date, notes } = currentCity;
 
-  if (isLoading) return <Spinner />;
+  async function handleDelete() {
+    await deleteCity(id);
+    navigate("/app/cities");
+  }
 
   return (
     <div className={styles.city}>
@@ -39,7 +34,7 @@ function City() {
 
       <div className={styles.row}>
         <h6>You went to {cityName} on</h6>
-        <p>{formatDate(date || null)}</p>
+        <p>{date && new Date(date).toLocaleDateString()}</p>
       </div>
 
       {notes && (
@@ -65,7 +60,7 @@ function City() {
           type="back"
           onClick={(e) => {
             e.preventDefault();
-            navigator(-1);
+            navigate(-1);
           }}
         >
           &larr; Back

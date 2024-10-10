@@ -11,14 +11,11 @@ const formatDate = (date) =>
   }).format(new Date(date));
 
 export default function CityItem({ city }) {
-  const {
-    cityName,
-    emoji,
-    date,
-    id,
-    position: { lat, lng },
-  } = city;
-  const { currentCity } = useCities();
+  const { cityName, emoji, date, id, position } = city;
+  const { currentCity, deleteCity } = useCities();
+
+  const lat = position?.lat || 0;
+  const lng = position?.lng || 0;
 
   return (
     //! 这里的跳转触发全局变化，如果在其他位置监听这些属性，那么他们都会变化
@@ -32,7 +29,15 @@ export default function CityItem({ city }) {
         <span className={styles.emoji}>{emoji}</span>
         <h3 className={styles.name}>{cityName}</h3>
         <time className={styles.date}>{formatDate(date)}</time>
-        <button className={styles.deleteBtn}>&times;</button>
+        <button
+          className={styles.deleteBtn}
+          onClick={(e) => {
+            e.preventDefault();
+            deleteCity(id);
+          }}
+        >
+          &times;
+        </button>
       </li>
     </Link>
   );

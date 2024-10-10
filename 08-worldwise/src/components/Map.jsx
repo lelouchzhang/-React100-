@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { useCities } from "../hooks/useCities";
 import {
@@ -47,7 +48,7 @@ export default function Map() {
         />
         {cities.map((city) => (
           <Marker
-            position={[city.position.lat, city.position.lng]}
+            position={[city.position?.lat || 0, city.position?.lng || 0]}
             key={city.id}
           >
             <Popup className={styles.customPopup}>
@@ -78,6 +79,7 @@ export default function Map() {
   function HandleClick() {
     const navigate = useNavigate();
     useMapEvent({
+      // 点击地图时，以编程式导航的方式传入querys，通过url传参
       click: (e) => {
         return navigate(`form?lat=${e.latlng.lat}&lng=${e.latlng.lng}`);
       },
